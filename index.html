@@ -522,21 +522,26 @@ async function boot(){
     document.getElementById("brandSub").textContent = t('cloudEdition');
     document.getElementById("statusText").textContent = t('statusOnline');
 
-    // قراءة البيانات من Supabase عند فتح التطبيق
+    // 1. جلب البيانات من السحابة أولاً
     try {
-        const { data, error } = await supabase
-            .from('hatch-data')
-            .select('data')
-            .eq('id', 1)
-            .single();
+        if (typeof supabase !== 'undefined') {
+            const { data, error } = await supabase
+                .from('hatch-data')
+                .select('data')
+                .eq('id', 1)
+                .single();
 
-        if (data && data.data) {
-            state = data.data;
+            // 2. تحديث الحالة الداخلية والتخزين المحلي بالبيانات السحابية
+            if (data && data.data && Object.keys(data.data).length > 0) {
+                state = data.data;
+                localStorage.setItem("hatchery_state", JSON.stringify(state));
+            }
         }
     } catch (e) {
         console.error("خطأ في جلب البيانات السحابية:", e);
     }
 
+    // 3. إعادة رسم الواجهة بالبيانات الجديدة
     render();
 }
  
