@@ -1210,6 +1210,16 @@ if (isAuthed()){
   renderLogin();
 }
 </script>
+<!-- 1. استدعاء مكتبة Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 2. كود الاتصال والمفاتيح -->
+<script>
+  const SUPABASE_URL = 'https://jpssfsfbnyckhgpolmhy.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_eNwpTLYnT_GCT7ik4jgT2A_qX4hZr4L';
+
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
 </body>
 </html>
  
