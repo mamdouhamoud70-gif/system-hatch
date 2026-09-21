@@ -1233,11 +1233,15 @@ document.documentElement.lang = state.lang;
 document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
 document.getElementById("langBtn").textContent = state.lang === "ar" ? "EN" : "AR";
 document.getElementById("brandName").textContent = t("appName");
-if (isAuthed()){
-  boot();
-} else {
-  renderLogin();
-}
+
+// تشغيل دالة الجلب وانتظار البيانات السحابية قبل الرسم
+(async function() {
+    if (isAuthed()){
+        await boot();
+    } else {
+        renderLogin();
+    }
+})();
 </script>
 <!-- 1. استدعاء مكتبة Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
