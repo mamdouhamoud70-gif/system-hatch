@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نظام إدارة الفقاسة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0C1728;
+    --bg-2: #0A1420;
+    --surface: #142238;
+    --surface-2: #1C2E4A;
+    --ink: #EAF1FA;
+    --ink-soft: #8CA0BC;
+    --border: #223350;
+    --cyan: #3EC6E0;
+    --cyan-soft: rgba(62,198,224,0.14);
+    --green: #3ECF8E;
+    --green-soft: rgba(62,207,142,0.14);
+    --amber: #F2B33D;
+    --amber-soft: rgba(242,179,61,0.14);
+    --purple: #B084F0;
+    --purple-soft: rgba(176,132,240,0.14);
+    --orange: #FF9F5A;
+    --orange-soft: rgba(255,159,90,0.14);
+    --red: #FF6B6B;
+    --red-soft: rgba(255,107,107,0.14);
+    --teal: #3ECF8E;
+    --teal-soft: rgba(62,207,142,0.14);
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.35);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(62,198,224,0.08), transparent 45%),
+      radial-gradient(circle at 100% 100%, rgba(62,207,142,0.06), transparent 45%),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Cairo', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .shell { display: flex; min-height: 100dvh; min-height: 100vh; align-items: stretch; }
+  .content-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  aside.sidebar {
+    width: 232px; flex-shrink: 0; background: var(--bg-2);
+    border-inline-end: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 18px;
+    padding: 18px 14px calc(14px + env(safe-area-inset-bottom,0px));
+    padding-top: calc(18px + env(safe-area-inset-top,0px));
+    position: sticky; top: 0; height: 100dvh; height: 100vh; overflow-y: auto;
+  }
+  header.topbar {
+    position: sticky; top: 0; z-index: 20;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    background: rgba(12,23,40,0.7); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding-inline: 22px;
+    padding-bottom: 14px;
+  }
+  .topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .topbar-date { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; margin: 0 0 2px; }
+  .topbar-title { font-size: 18px; font-weight: 800; margin: 0; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: linear-gradient(155deg, var(--cyan), var(--green));
+    display: flex; align-items: center; justify-content: center;
+    color: #06121C; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(62,198,224,0.12);
+  }
+  .brand-mark svg { width: 19px; height: 19px; }
+  .brand-name { font-weight: 800; font-size: 15px; letter-spacing: 0; }
+  .brand-sub { font-size: 11px; color: var(--ink-soft); font-weight: 600; }
+  .lang-btn {
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--ink);
+    border-radius: 8px; padding: 7px 12px; font-family: inherit; font-weight: 600;
+    font-size: 13px; cursor: pointer;
+  }
+  .sidebar-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .sidebar-nav button {
+    display: flex; align-items: center; gap: 11px; border: none; background: none;
+    color: var(--ink-soft); font-family: inherit; font-size: 14px; font-weight: 700;
+    cursor: pointer; padding: 11px 12px; border-radius: 11px; text-align: start;
+    transition: background .15s ease, color .15s ease;
+  }
+  .sidebar-nav button:hover { background: var(--surface); color: var(--ink); }
+  .sidebar-nav button svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .sidebar-nav button.active { color: var(--nav-color, var(--cyan)); background: var(--nav-color-soft, var(--cyan-soft)); }
+  .sidebar-footer { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); flex-shrink: 0; }
+  .sidebar-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); font-weight: 600; padding: 0 4px; }
+  .icon-toggle-btn {
+    width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--ink-soft); display: inline-flex;
+    align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+  }
+  .icon-toggle-btn svg { width: 17px; height: 17px; }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; }
+  @media (max-width: 900px) {
+    .shell { flex-direction: column; }
+    aside.sidebar {
+      width: 100%; height: auto; position: sticky; flex-direction: row; align-items: center;
+      padding: 10px 12px; border-inline-end: none; border-bottom: 1px solid var(--border); gap: 10px;
+      overflow-x: auto; z-index: 30;
+    }
+    .sidebar-brand { flex-shrink: 0; }
+    .sidebar-nav { flex-direction: row; flex: 0 0 auto; }
+    .sidebar-nav button { padding: 8px 12px; white-space: nowrap; }
+    .sidebar-nav button span.label { display: none; }
+    .sidebar-footer { flex-direction: row; border-top: none; padding-top: 0; flex-shrink: 0; margin-inline-start: auto; }
+    .sidebar-status { display: none; }
+  }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .card { animation: cardIn .45s cubic-bezier(.2,.7,.3,1) both; }
+  .grid .card:nth-child(1){ animation-delay: .02s; } .grid .card:nth-child(2){ animation-delay: .07s; }
+  .grid .card:nth-child(3){ animation-delay: .12s; } .grid .card:nth-child(4){ animation-delay: .17s; }
+  .grid .card:nth-child(5){ animation-delay: .22s; } .grid .card:nth-child(6){ animation-delay: .27s; }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 10px 30px rgba(62,198,224,0.22), 0 0 0 0 rgba(62,198,224,0.25); }
+    50% { box-shadow: 0 10px 34px rgba(62,198,224,0.34), 0 0 0 8px rgba(62,198,224,0); }
+  }
+  main { max-width: 1000px; margin: 0 auto; padding: 20px 16px 60px; width: 100%; }
+  .grid { display: grid; gap: 14px; }
+  .grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 17px 18px; box-shadow: var(--shadow); border-inline-start: 3px solid transparent;
+  }
+  .card.clickable { cursor: pointer; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+  .card.clickable:hover { border-inline-start-color: var(--amber); box-shadow: 0 2px 4px rgba(35,40,31,0.08), 0 10px 26px rgba(35,40,31,0.08); }
+  .card.clickable:active { transform: scale(0.99); }
+  .card.accent-amber { border-inline-start-color: var(--amber); }
+  .card.accent-teal { border-inline-start-color: var(--teal); }
+  .card.hero {
+    background: linear-gradient(160deg, #123B4E 0%, #0F2E3E 100%);
+    color: #F4FAF7; border: 1px solid rgba(62,198,224,0.25);
+    animation: cardIn .45s cubic-bezier(.2,.7,.3,1) both, glowPulse 3.2s ease-in-out infinite;
+  }
+  .card.hero .stat-label { color: rgba(244,250,247,0.75); }
+  .card.hero .stat-value { color: #F4FAF7; }
+  .stat-label { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; margin: 0 0 7px; }
+  .stat-value { font-size: 27px; font-weight: 800; margin: 0; line-height: 1.15; letter-spacing: -0.3px; }
+  .stat-sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 26px 0 12px;
+  }
+  .section-head:first-child { margin-top: 0; }
+  .section-head h2 { font-size: 17px; font-weight: 800; margin: 0; }
+  .btn {
+    border: none; border-radius: 9px; padding: 9px 15px; font-family: inherit;
+    font-weight: 700; font-size: 13.5px; cursor: pointer; display: inline-flex;
+    align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--amber); color: #2A1B04; }
+  .btn-outline { background: var(--surface-2); color: var(--ink); border: 1px solid var(--border); }
+  .btn-danger { background: var(--red-soft); color: var(--red); }
+  .btn-teal { background: var(--teal); color: #F3FAF6; }
+  .btn-sm { padding: 6px 11px; font-size: 12.5px; border-radius: 7px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .pill-active { background: var(--teal-soft); color: var(--teal); }
+  .pill-stopped { background: var(--surface-2); color: var(--ink-soft); }
+  .pill-alert { background: var(--red-soft); color: var(--red); }
+  .pill svg { width: 12px; height: 12px; }
+  .alert-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .station-card { display: flex; flex-direction: column; gap: 10px; }
+  .station-card .row1 { display: flex; align-items: center; justify-content: space-between; }
+  .station-name { font-size: 17px; font-weight: 800; }
+  .mini-stats { display: flex; gap: 16px; }
+  .mini-stats div p:first-child { font-size: 11.5px; color: var(--ink-soft); margin: 0; font-weight: 600; }
+  .mini-stats div p:last-child { font-size: 15.5px; font-weight: 800; margin: 2px 0 0; }
+  .empty-state {
+    text-align: center; padding: 50px 20px; color: var(--ink-soft);
+  }
+  .empty-state .glyph { display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; width: 52px; height: 52px; border-radius: 14px; background: var(--surface-2); color: var(--ink-soft); }
+  .empty-state .glyph svg { width: 24px; height: 24px; }
+  .empty-state p { margin: 4px 0; font-size: 14px; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft);
+    font-weight: 700; font-size: 13.5px; background: none; border: none; font-family: inherit;
+    cursor: pointer; padding: 0; margin-bottom: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: start; color: var(--ink-soft); font-weight: 700; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 10px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; }
+  .icon-btn {
+    border: none; background: none; cursor: pointer; color: var(--ink-soft);
+    padding: 5px 7px; border-radius: 7px; display: inline-flex; align-items: center;
+  }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .icon-btn:hover { background: var(--surface-2); color: var(--red); }
+  /* modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20,22,16,0.45); z-index: 50;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  @media (min-width: 640px) { .overlay { align-items: center; } }
+  .modal {
+    background: var(--surface); width: 100%; max-width: 460px; border-radius: 18px 18px 0 0;
+    padding: 22px 20px calc(22px + env(safe-area-inset-bottom,0px));
+    max-height: 88vh; overflow-y: auto;
+  }
+  @media (min-width: 640px) { .modal { border-radius: 18px; } }
+  .modal h3 { margin: 0 0 16px; font-size: 17px; font-weight: 800; }
+  .field { margin-bottom: 13px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 5px; }
+  .field input, .field select {
+    width: 100%; padding: 10px 11px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--ink); font-family: inherit; font-size: 14.5px;
+  }
+  .field input:focus, .field select:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+  .computed-box {
+    background: var(--teal-soft); color: var(--teal); border-radius: 10px; padding: 10px 12px;
+    font-size: 13px; font-weight: 700; margin-top: 4px;
+  }
+  .alert-banner {
+    display: flex; align-items: center; gap: 10px; background: var(--red-soft); color: var(--red);
+    border-radius: 12px; padding: 12px 14px; font-weight: 700; font-size: 13.5px; margin-bottom: 14px;
+  }
+  .subtabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .subtabs button {
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
+    font-family: inherit; font-weight: 700; font-size: 13px; padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  }
+  .subtabs button.active { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+ 
+  /* login screen */
+  .login-wrap {
+    min-height: 100dvh; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px calc(20px + env(safe-area-inset-right,0px)) 24px calc(20px + env(safe-area-inset-left,0px));
+    background: radial-gradient(circle at 30% 15%, var(--amber-soft), transparent 55%),
+                radial-gradient(circle at 80% 85%, var(--teal-soft), transparent 55%),
+                var(--bg);
+  }
+  .login-card {
+    width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 30px 26px; box-shadow: var(--shadow);
+  }
+  .login-mark {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: linear-gradient(155deg, var(--amber), var(--teal));
+    display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+  }
+  .login-mark svg { width: 26px; height: 26px; color: #fff; }
+  .login-card h1 { font-size: 19px; font-weight: 800; margin: 0 0 4px; }
+  .login-card .sub { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 22px; }
+  .login-error {
+    background: var(--red-soft); color: var(--red); border-radius: 9px; padding: 9px 12px;
+    font-size: 13px; font-weight: 700; margin-bottom: 14px; display: none;
+  }
+  .login-error.show { display: block; }
+</style>
+</head>
+<body>
+<div id="loginRoot"></div>
+<div id="appRoot" style="display:none;">
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name" id="brandName">نظام إدارة الفقاسة</div>
+        <div class="brand-sub" id="brandSub">Cloud Edition</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="tabs"></nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-status"><span class="status-dot"></span><span id="statusText"></span></div>
+      <div class="topbar-actions">
+        <button class="icon-toggle-btn" id="accountBtn" onclick="showAccountModal()" aria-label="account"></button>
+        <button class="lang-btn" id="langBtn" onclick="toggleLang()">EN</button>
+      </div>
+    </div>
+  </aside>
+  <div class="content-col">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div>
+          <p class="topbar-date" id="topbarDate"></p>
+          <p class="topbar-title" id="topbarTitle"></p>
+        </div>
+      </div>
+    </header>
+    <main id="app"></main>
+  </div>
+</div>
+</div>
+ 
+<div id="modalRoot"></div>
+ 
+<script>
+/* ---------- i18n ---------- */
+const STR = {
+  ar: {
+    dashboard:"الرئيسية", stations:"المحطات", medicines:"الأدوية", nitrogen:"النيتروجين", workers:"العمال", inventory:"المخزون",
+    appName:"نظام إدارة الفقاسة",
+    overallTitle:"نظرة عامة على الفقاسة",
+    activeStations:"محطات نشطة", totalEggs:"إجمالي البيض", totalChicks:"إجمالي الصيصان", avgRate:"متوسط نسبة الفقس",
+    perStationRate:"نسبة الفقس لكل محطة",
+    noStationsYet:"لسه معملتش أي محطة", addFirstStation:"ابدأ بإضافة أول محطة",
+    addStation:"إضافة محطة جديدة", stationName:"اسم المحطة", stationNamePh:"مثال: P1",
+    active:"نشطة", stopped:"خارج الإنتاج", markStopped:"إخراج من الإنتاج", markActive:"إعادة للإنتاج",
+    batches:"الدفعات", addBatch:"إضافة دفعة صيصان جديدة", eggs:"عدد البيض", chicks:"عدد الصيصان", flockAge:"عمر القطيع (أسبوع)",
+    hatchRate:"نسبة الفقس", date:"التاريخ", save:"حفظ", cancel:"إلغاء", delete:"حذف", edit:"تعديل",
+    back:"رجوع", noBatchesYet:"لسه مفيش دفعات في المحطة دي", stationTotal:"إجمالي المحطة",
+    deleteConfirmStation:"تأكيد حذف المحطة دي وكل بياناتها؟", deleteConfirmBatch:"تأكيد حذف الدفعة دي؟",
+    medicinesTitle:"الأدوية", addMedicine:"إضافة منتج جديد", medicineName:"اسم المنتج", medicineNamePh:"مثال: MA5",
+    noMedicinesYet:"لسه مفيش منتجات مضافة", currentStock:"الرصيد الحالي", doses:"دوز",
+    dosesPerBottle:"عدد الدوزات في العبوة", alertThreshold:"حد الإنذار (بالدوز)",
+    settings:"الإعدادات", consumptionLog:"سجل الاستهلاك اليومي", supplyLog:"سجل التوريدات (بلانص)",
+    addConsumption:"تسجيل استهلاك جديد", bottlesUsed:"عدد العبوات المستخدمة", chicksCount:"عدد الصيصان",
+    destination:"راحت فين / ملاحظات", dosesUsed:"دوز مستخدم",
+    addSupply:"تسجيل توريد جديد", bottlesReceived:"عدد العبوات المستلمة", supplyNote:"ملاحظات",
+    lowStockAlert:"تنبيه: الرصيد وصل لحد الإنذار",
+    deleteConfirmMedicine:"تأكيد حذف المنتج ده وكل سجلاته؟",
+    bottles:"عبوة", remaining:"المتبقي",
+    nitrogenTitle:"النيتروجين", fillAmount:"كمية التعبئة", alertLevel:"مستوى الإنذار (أيام متبقية)",
+    dailyUsage:"الاستهلاك اليومي", addUsage:"تسجيل استهلاك اليوم", remainingStock:"الرصيد المتبقي", daysLeft:"الأيام المتبقية",
+    workersTitle:"العمال", addWorker:"إضافة عامل جديد", workerName:"اسم العامل", fileNumber:"رقم الملف",
+    vacationStart:"تاريخ بداية الإجازة", vacationDays:"مدة الإجازة (يوم)", expectedReturn:"تاريخ العودة المتوقع",
+    actualReturn:"تاريخ العودة الفعلي", daysBack:"أيام العودة للشغل", notReturned:"لسه في إجازة",
+    inventoryTitle:"المخزون", addItem:"إضافة صنف جديد", itemCode:"كود الصنف", itemName:"اسم الصنف",
+    category:"الفئة", location:"الموقع", box:"الرف / الصندوق", quantity:"الكمية", search:"بحث بالاسم أو الكود",
+    issueItem:"تسجيل صرف / استلام", changeQty:"الكمية (+ إضافة / - صرف)", note:"ملاحظة",
+    noDataYet:"لا توجد بيانات بعد", noResults:"لا توجد نتائج",
+    close:"إغلاق",
+    loginTitle:"تسجيل الدخول", loginSub:"ادخل بيانات الحساب للوصول لنظام إدارة الفقاسة",
+    username:"اسم المستخدم", password:"كلمة المرور", loginBtn:"دخول",
+    loginError:"اسم المستخدم أو كلمة المرور غلط",
+    accountTitle:"الحساب", changeCredentials:"تغيير بيانات الدخول",
+    newUsername:"اسم المستخدم الجديد", newPassword:"كلمة المرور الجديدة",
+    logout:"تسجيل الخروج", savedMsg:"تم الحفظ",
+    cloudEdition:"محلي على هذا الجهاز", statusOnline:"متصل الآن"
+  },
+  en: {
+    dashboard:"Dashboard", stations:"Stations", medicines:"Medicines", nitrogen:"Nitrogen", workers:"Workers", inventory:"Inventory",
+    appName:"Hatchery Management",
+    overallTitle:"Hatchery overview",
+    activeStations:"Active stations", totalEggs:"Total eggs", totalChicks:"Total chicks", avgRate:"Average hatch rate",
+    perStationRate:"Hatch rate per station",
+    noStationsYet:"No stations yet", addFirstStation:"Start by adding your first station",
+    addStation:"Add new station", stationName:"Station name", stationNamePh:"e.g. P1",
+    active:"Active", stopped:"Out of production", markStopped:"Mark out of production", markActive:"Bring back to production",
+    batches:"Batches", addBatch:"Add new chick batch", eggs:"Eggs", chicks:"Chicks", flockAge:"Flock age (weeks)",
+    hatchRate:"Hatch rate", date:"Date", save:"Save", cancel:"Cancel", delete:"Delete", edit:"Edit",
+    back:"Back", noBatchesYet:"No batches in this station yet", stationTotal:"Station total",
+    deleteConfirmStation:"Delete this station and all its data?", deleteConfirmBatch:"Delete this batch?",
+    medicinesTitle:"Medicines", addMedicine:"Add new product", medicineName:"Product name", medicineNamePh:"e.g. MA5",
+    noMedicinesYet:"No products added yet", currentStock:"Current stock", doses:"doses",
+    dosesPerBottle:"Doses per bottle", alertThreshold:"Alert threshold (doses)",
+    settings:"Settings", consumptionLog:"Daily consumption log", supplyLog:"Supply log (balance)",
+    addConsumption:"Log new consumption", bottlesUsed:"Bottles used", chicksCount:"Chicks count",
+    destination:"Went to / notes", dosesUsed:"Doses used",
+    addSupply:"Log new supply", bottlesReceived:"Bottles received", supplyNote:"Notes",
+    lowStockAlert:"Alert: stock has hit the threshold",
+    deleteConfirmMedicine:"Delete this product and all its records?",
+    bottles:"bottles", remaining:"Remaining",
+    nitrogenTitle:"Nitrogen", fillAmount:"Fill amount", alertLevel:"Alert level (days remaining)",
+    dailyUsage:"Daily usage", addUsage:"Log today's usage", remainingStock:"Remaining stock", daysLeft:"Days left",
+    workersTitle:"Workers", addWorker:"Add new worker", workerName:"Worker name", fileNumber:"File number",
+    vacationStart:"Vacation start date", vacationDays:"Vacation length (days)", expectedReturn:"Expected return",
+    actualReturn:"Actual return date", daysBack:"Days back at work", notReturned:"Still on vacation",
+    inventoryTitle:"Inventory", addItem:"Add new item", itemCode:"Item code", itemName:"Item name",
+    category:"Category", location:"Location", box:"Shelf / box", quantity:"Quantity", search:"Search by name or code",
+    issueItem:"Log issue / receipt", changeQty:"Quantity (+add / -issue)", note:"Note",
+    noDataYet:"No data yet", noResults:"No results",
+    close:"Close",
+    loginTitle:"Sign in", loginSub:"Enter the account details to access the hatchery system",
+    username:"Username", password:"Password", loginBtn:"Sign in",
+    loginError:"Incorrect username or password",
+    accountTitle:"Account", changeCredentials:"Change login details",
+    newUsername:"New username", newPassword:"New password",
+    logout:"Sign out", savedMsg:"Saved",
+    cloudEdition:"Stored on this device", statusOnline:"Online now"
+  }
+};
+function t(k){ return STR[state.lang][k] || k; }
+ 
+/* ---------- icons (inline SVG, stroke-based) ---------- */
+const ICONS = {
+  egg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4.5 0 7-3.5 7-8 0-5-3-11-7-11S5 8 5 13c0 4.5 2.5 8 7 8Z"/></svg>`,
+  dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="8" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="14.5" width="7" height="6" rx="1.5"/></svg>`,
+  stations: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10l5-3v3l5-3v3l5-3v13H4Z"/><path d="M8 20v-4h3v4"/></svg>`,
+  medicines: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="4"/><path d="M6 11h12"/></svg>`,
+  nitrogen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.5 6l15 12M19.5 6l-15 12"/></svg>`,
+  workers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>`,
+  inventory: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z"/><path d="M3.5 8v8L12 20l8.5-4V8"/><path d="M12 12v8"/></svg>`,
+  lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>`,
+  swap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v13M7 17l-3-3M7 17l3-3M17 20V7M17 7l3 3M17 7l-3 3"/></svg>`,
+  chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg>`,
+  bottle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6M10 2v4.5L7 10v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-3.5V2"/></svg>`,
+  truck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3z"/><path d="M14 11h4l3 3v2h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
+  chick: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M9 11h.01M15 11h.01M9.5 15c.8.6 1.7 1 2.5 1s1.7-.4 2.5-1M12 6V3M9 3.5l1.5 1.8M15 3.5 13.5 5.3"/></svg>`,
+  warn: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/></svg>`
+};
+function icon(name){ return ICONS[name] || ""; }
+ 
+/* ---------- state ---------- */
+const STORAGE_KEY = "hatchery_state_v2";
+let state = loadState();
+function defaultState(){
+  return {
+    lang: "ar",
+    tab: "dashboard",
+    openStationId: null,
+    openMedicineId: null,
+    invQuery: "",
+    auth: { username: "admin", password: "1234" },
+    stations: [],
+    medicines: [],
+    nitrogen: { fillAmount: 0, alertLevel: 3, logs: [] },
+    workers: [],
+    inventory: []
+  };
+}
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed);
+  } catch(e){ return defaultState(); }
+}
+function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+ 
+/* ---------- auth ---------- */
+const SESSION_KEY = "hatchery_authed_v1";
+function isAuthed(){ return sessionStorage.getItem(SESSION_KEY) === "1"; }
+function renderLogin(){
+  document.getElementById("loginRoot").innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-mark">${icon('egg')}</div>
+        <h1>${t('loginTitle')}</h1>
+        <p class="sub">${t('loginSub')}</p>
+        <div class="login-error" id="loginErr">${t('loginError')}</div>
+        <div class="field"><label>${t('username')}</label><input id="li_user" autofocus></div>
+        <div class="field"><label>${t('password')}</label><input id="li_pass" type="password"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitLogin()">${t('loginBtn')}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("li_pass").addEventListener("keydown", e=>{ if(e.key==="Enter") submitLogin(); });
+  document.getElementById("li_user").addEventListener("keydown", e=>{ if(e.key==="Enter") submitLogin(); });
+}
+function submitLogin(){
+  const u = document.getElementById("li_user").value.trim();
+  const p = document.getElementById("li_pass").value;
+  if (u === state.auth.username && p === state.auth.password){
+    sessionStorage.setItem(SESSION_KEY, "1");
+    boot();
+  } else {
+    document.getElementById("loginErr").classList.add("show");
+  }
+}
+function showAccountModal(){
+  openModal(`
+    <h3>${t('accountTitle')}</h3>
+    <div class="field"><label>${t('newUsername')}</label><input id="acc_user" value="${escapeHtml(state.auth.username)}"></div>
+    <div class="field"><label>${t('newPassword')}</label><input id="acc_pass" value="${escapeHtml(state.auth.password)}"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="doLogout()">${t('logout')}</button>
+      <button class="btn btn-primary" onclick="submitAccount()">${t('save')}</button>
+    </div>
+  `);
+}
+function submitAccount(){
+  const u = document.getElementById("acc_user").value.trim();
+  const p = document.getElementById("acc_pass").value;
+  if (u) state.auth.username = u;
+  if (p) state.auth.password = p;
+  persist(); closeModal();
+}
+function doLogout(){
+  sessionStorage.removeItem(SESSION_KEY);
+  closeModal();
+  document.getElementById("appRoot").style.display = "none";
+  document.getElementById("loginRoot").style.display = "block";
+  renderLogin();
+}
+function boot(){
+  document.getElementById("loginRoot").style.display = "none";
+  document.getElementById("appRoot").style.display = "block";
+  document.querySelector(".brand-mark").innerHTML = icon('egg');
+  document.getElementById("accountBtn").innerHTML = icon('lock');
+  document.getElementById("brandSub").textContent = t('cloudEdition');
+  document.getElementById("statusText").textContent = t('statusOnline');
+  render();
+}
+ 
+/* ---------- lang toggle ---------- */
+function toggleLang(){
+  state.lang = state.lang === "ar" ? "en" : "ar";
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+  persist();
+  if (isAuthed()){
+    document.getElementById("langBtn").textContent = state.lang === "ar" ? "EN" : "AR";
+    document.getElementById("brandName").textContent = t("appName");
+    document.getElementById("brandSub").textContent = t('cloudEdition');
+    document.getElementById("statusText").textContent = t('statusOnline');
+    render();
+  } else {
+    renderLogin();
+  }
+}
+ 
+/* ---------- derived calcs ---------- */
+function stationTotals(st){
+  const eggs = st.batches.reduce((s,b)=>s+Number(b.eggs||0),0);
+  const chicks = st.batches.reduce((s,b)=>s+Number(b.chicks||0),0);
+  const rate = eggs > 0 ? (chicks/eggs*100) : 0;
+  return { eggs, chicks, rate };
+}
+function overallTotals(){
+  const active = state.stations.filter(s=>s.active);
+  const eggs = active.reduce((s,st)=>s+stationTotals(st).eggs,0);
+  const chicks = active.reduce((s,st)=>s+stationTotals(st).chicks,0);
+  const rate = eggs > 0 ? (chicks/eggs*100) : 0;
+  return { activeCount: active.length, eggs, chicks, rate };
+}
+function medicineStock(m){
+  const supplied = m.supplies.reduce((s,x)=>s+Number(x.bottles||0),0);
+  const used = m.consumption.reduce((s,x)=>s+Number(x.bottlesUsed||0),0);
+  const remainingBottles = supplied - used;
+  const remainingDoses = remainingBottles * Number(m.dosesPerBottle||0);
+  return { remainingBottles, remainingDoses, lowStock: remainingDoses <= Number(m.alertThreshold||0) };
+}
+function fmt(n){ return Number(n||0).toLocaleString(state.lang === "ar" ? "ar-EG" : "en-US"); }
+function fmt1(n){ return Number(n||0).toLocaleString(state.lang === "ar" ? "ar-EG" : "en-US", {maximumFractionDigits:1}); }
+ 
+/* ---------- modal system ---------- */
+function openModal(html){
+  document.getElementById("modalRoot").innerHTML = `<div class="overlay" onclick="if(event.target===this) closeModal()"><div class="modal">${html}</div></div>`;
+}
+function closeModal(){ document.getElementById("modalRoot").innerHTML = ""; }
+ 
+/* ---------- render root ---------- */
+function animateCounters(){
+  document.querySelectorAll('.count-up').forEach(el=>{
+    if (el.dataset.animated) return;
+    el.dataset.animated = "1";
+    const target = parseFloat(el.dataset.target||"0");
+    const decimals = parseInt(el.dataset.decimals||"0",10);
+    const suffix = el.dataset.suffix || "";
+    const duration = 750;
+    const start = performance.now();
+    function frame(now){
+      const p = Math.min(1, (now-start)/duration);
+      const eased = 1 - Math.pow(1-p, 3);
+      const val = target*eased;
+      el.textContent = (decimals>0 ? fmt1(val) : fmt(Math.round(val))) + suffix;
+      if (p<1) requestAnimationFrame(frame);
+      else el.textContent = (decimals>0 ? fmt1(target) : fmt(target)) + suffix;
+    }
+    requestAnimationFrame(frame);
+  });
+}
+function render(){
+  renderTabs();
+  const app = document.getElementById("app");
+  if (state.tab === "dashboard") app.innerHTML = renderDashboard();
+  else if (state.tab === "stations") app.innerHTML = state.openStationId ? renderStationDetail() : renderStationsList();
+  else if (state.tab === "medicines") app.innerHTML = state.openMedicineId ? renderMedicineDetail() : renderMedicinesList();
+  else if (state.tab === "nitrogen") app.innerHTML = renderNitrogen();
+  else if (state.tab === "workers") app.innerHTML = renderWorkers();
+  else if (state.tab === "inventory") app.innerHTML = renderInventory();
+  animateCounters();
+}
+const NAV_COLORS = {
+  dashboard: ["var(--cyan)","var(--cyan-soft)"],
+  stations: ["var(--green)","var(--green-soft)"],
+  medicines: ["var(--amber)","var(--amber-soft)"],
+  nitrogen: ["var(--cyan)","var(--cyan-soft)"],
+  workers: ["var(--purple)","var(--purple-soft)"],
+  inventory: ["var(--orange)","var(--orange-soft)"]
+};
+function renderTabs(){
+  const items = ["dashboard","stations","medicines","nitrogen","workers","inventory"];
+  document.getElementById("tabs").innerHTML = items.map(key=>{
+    const [c, cs] = NAV_COLORS[key];
+    const activeStyle = state.tab===key ? `style="--nav-color:${c};--nav-color-soft:${cs};"` : "";
+    return `<button class="${state.tab===key?'active':''}" ${activeStyle} onclick="setTab('${key}')">${icon(key)}<span class="label">${t(key)}</span></button>`;
+  }).join("");
+  const topbarTitle = document.getElementById("topbarTitle");
+  const topbarDate = document.getElementById("topbarDate");
+  if (topbarTitle) topbarTitle.textContent = t(state.tab);
+  if (topbarDate) topbarDate.textContent = new Date().toLocaleDateString(state.lang==="ar"?"ar-EG":"en-US", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+}
+function setTab(tab){ state.tab = tab; state.openStationId=null; state.openMedicineId=null; persist(); render(); }
+ 
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+  const o = overallTotals();
+  const activeStations = state.stations.filter(s=>s.active);
+  const maxRate = Math.max(1, ...activeStations.map(s=>stationTotals(s).rate));
+  return `
+    <div class="section-head"><h2>${t('overallTitle')}</h2></div>
+    <div class="card hero" style="margin-bottom:14px;">
+      <p class="stat-label">${t('avgRate')}</p>
+      <p class="stat-value" style="font-size:42px;"><span class="count-up" data-target="${o.rate}" data-decimals="1" data-suffix="%">0%</span></p>
+    </div>
+    <div class="grid cols-3">
+      <div class="card accent-amber"><p class="stat-label">${t('activeStations')}</p><p class="stat-value"><span class="count-up" data-target="${o.activeCount}">0</span></p></div>
+      <div class="card accent-amber"><p class="stat-label">${t('totalEggs')}</p><p class="stat-value"><span class="count-up" data-target="${o.eggs}">0</span></p></div>
+      <div class="card accent-amber"><p class="stat-label">${t('totalChicks')}</p><p class="stat-value"><span class="count-up" data-target="${o.chicks}">0</span></p></div>
+    </div>
+    <div class="section-head"><h2>${t('perStationRate')}</h2></div>
+    ${activeStations.length === 0 ? emptyState(icon('chart'), t('noStationsYet')) : `
+      <div class="card">
+        ${activeStations.map(s=>{
+          const st = stationTotals(s);
+          const pct = Math.max(4, (st.rate/maxRate)*100);
+          return `<div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:700;margin-bottom:5px;">
+              <span>${escapeHtml(s.name)}</span><span>${fmt1(st.rate)}%</span>
+            </div>
+            <div style="background:var(--surface-2);border-radius:999px;height:9px;overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--amber),var(--teal));border-radius:999px;"></div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    `}
+  `;
+}
+function emptyState(glyph, text, sub){
+  return `<div class="empty-state"><div class="glyph">${glyph}</div><p style="font-weight:700;color:var(--ink)">${text}</p>${sub?`<p>${sub}</p>`:""}</div>`;
+}
+function escapeHtml(s){ return String(s??"").replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+ 
+/* ================= STATIONS ================= */
+function renderStationsList(){
+  return `
+    <div class="section-head"><h2>${t('stations')}</h2>
+      <button class="btn btn-primary" onclick="showAddStationModal()">+ ${t('addStation')}</button>
+    </div>
+    ${state.stations.length === 0 ? emptyState(icon('stations'), t('noStationsYet'), t('addFirstStation')) : `
+      <div class="grid cols-2">
+        ${state.stations.map(s=>{
+          const st = stationTotals(s);
+          return `<div class="card station-card clickable accent-amber" onclick="openStation('${s.id}')">
+            <div class="row1">
+              <span class="station-name">${escapeHtml(s.name)}</span>
+              <span class="pill ${s.active?'pill-active':'pill-stopped'}">${s.active?t('active'):t('stopped')}</span>
+            </div>
+            <div class="mini-stats">
+              <div><p>${t('eggs')}</p><p>${fmt(st.eggs)}</p></div>
+              <div><p>${t('chicks')}</p><p>${fmt(st.chicks)}</p></div>
+              <div><p>${t('hatchRate')}</p><p>${fmt1(st.rate)}%</p></div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    `}
+  `;
+}
+function showAddStationModal(){
+  openModal(`
+    <h3>${t('addStation')}</h3>
+    <div class="field"><label>${t('stationName')}</label><input id="f_name" placeholder="${t('stationNamePh')}" autofocus></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitAddStation()">${t('save')}</button>
+    </div>
+  `);
+}
+function submitAddStation(){
+  const name = document.getElementById("f_name").value.trim();
+  if (!name) return;
+  state.stations.push({ id: uid(), name, active: true, batches: [] });
+  persist(); closeModal(); render();
+}
+function openStation(id){ state.openStationId = id; persist(); render(); }
+function closeStation(){ state.openStationId = null; persist(); render(); }
+function toggleStationActive(id){
+  const s = state.stations.find(x=>x.id===id);
+  s.active = !s.active;
+  persist(); render();
+}
+function deleteStation(id){
+  if (!confirm(t('deleteConfirmStation'))) return;
+  state.stations = state.stations.filter(x=>x.id!==id);
+  state.openStationId = null;
+  persist(); render();
+}
+function renderStationDetail(){
+  const s = state.stations.find(x=>x.id===state.openStationId);
+  if (!s) { state.openStationId = null; return renderStationsList(); }
+  const st = stationTotals(s);
+  return `
+    <button class="back-link" onclick="closeStation()">→ ${t('back')}</button>
+    <div class="section-head">
+      <h2>${escapeHtml(s.name)} <span class="pill ${s.active?'pill-active':'pill-stopped'}" style="margin-inline-start:8px;">${s.active?t('active'):t('stopped')}</span></h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="toggleStationActive('${s.id}')">${s.active?t('markStopped'):t('markActive')}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStation('${s.id}')">${t('delete')}</button>
+      </div>
+    </div>
+    <div class="grid cols-3">
+      <div class="card"><p class="stat-label">${t('eggs')} — ${t('stationTotal')}</p><p class="stat-value">${fmt(st.eggs)}</p></div>
+      <div class="card"><p class="stat-label">${t('chicks')} — ${t('stationTotal')}</p><p class="stat-value">${fmt(st.chicks)}</p></div>
+      <div class="card"><p class="stat-label">${t('hatchRate')}</p><p class="stat-value" style="color:var(--teal)">${fmt1(st.rate)}%</p></div>
+    </div>
+    <div class="section-head"><h2>${t('batches')}</h2>
+      <button class="btn btn-primary btn-sm" onclick="showAddBatchModal('${s.id}')">+ ${t('addBatch')}</button>
+    </div>
+    ${s.batches.length===0 ? emptyState(icon('chick'), t('noBatchesYet')) : `
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>${t('date')}</th><th>${t('eggs')}</th><th>${t('chicks')}</th><th>${t('flockAge')}</th><th>${t('hatchRate')}</th><th></th></tr></thead>
+          <tbody>
+            ${[...s.batches].reverse().map(b=>{
+              const rate = b.eggs>0 ? (b.chicks/b.eggs*100) : 0;
+              return `<tr>
+                <td>${escapeHtml(b.date)}</td><td>${fmt(b.eggs)}</td><td>${fmt(b.chicks)}</td><td>${fmt(b.age)}</td>
+                <td>${fmt1(rate)}%</td>
+                <td><button class="icon-btn" onclick="deleteBatch('${s.id}','${b.id}')">${icon('trash')}</button></td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    `}
+  `;
+}
+function showAddBatchModal(stationId){
+  openModal(`
+    <h3>${t('addBatch')}</h3>
+    <div class="field"><label>${t('date')}</label><input id="f_date" type="date" value="${todayStr()}"></div>
+    <div class="field"><label>${t('eggs')}</label><input id="f_eggs" type="number" min="0" inputmode="numeric"></div>
+    <div class="field"><label>${t('chicks')}</label><input id="f_chicks" type="number" min="0" inputmode="numeric"></div>
+    <div class="field"><label>${t('flockAge')}</label><input id="f_age" type="number" min="0" inputmode="numeric"></div>
+    <div id="f_computed" class="computed-box" style="display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitAddBatch('${stationId}')">${t('save')}</button>
+    </div>
+  `);
+  const upd = ()=>{
+    const eggs = Number(document.getElementById("f_eggs").value||0);
+    const chicks = Number(document.getElementById("f_chicks").value||0);
+    const box = document.getElementById("f_computed");
+    if (eggs>0){
+      box.style.display = "block";
+      box.textContent = `${t('hatchRate')}: ${((chicks/eggs)*100).toFixed(1)}%`;
+    } else box.style.display = "none";
+  };
+  document.getElementById("f_eggs").addEventListener("input", upd);
+  document.getElementById("f_chicks").addEventListener("input", upd);
+}
+function submitAddBatch(stationId){
+  const date = document.getElementById("f_date").value || todayStr();
+  const eggs = Number(document.getElementById("f_eggs").value||0);
+  const chicks = Number(document.getElementById("f_chicks").value||0);
+  const age = Number(document.getElementById("f_age").value||0);
+  const s = state.stations.find(x=>x.id===stationId);
+  s.batches.push({ id: uid(), date, eggs, chicks, age });
+  persist(); closeModal(); render();
+}
+function deleteBatch(stationId, batchId){
+  if (!confirm(t('deleteConfirmBatch'))) return;
+  const s = state.stations.find(x=>x.id===stationId);
+  s.batches = s.batches.filter(b=>b.id!==batchId);
+  persist(); render();
+}
+ 
+/* ================= MEDICINES ================= */
+function renderMedicinesList(){
+  return `
+    <div class="section-head"><h2>${t('medicinesTitle')}</h2>
+      <button class="btn btn-primary" onclick="showAddMedicineModal()">+ ${t('addMedicine')}</button>
+    </div>
+    ${state.medicines.length===0 ? emptyState(icon('medicines'), t('noMedicinesYet')) : `
+      <div class="grid cols-2">
+        ${state.medicines.map(m=>{
+          const stock = medicineStock(m);
+          return `<div class="card clickable accent-teal" onclick="openMedicine('${m.id}')">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <span class="station-name">${escapeHtml(m.name)}</span>
+              ${stock.lowStock ? `<span class="pill pill-alert">${icon('warn')} ${t('lowStockAlert')}</span>` : ""}
+            </div>
+            <p class="stat-label" style="margin-top:10px;">${t('currentStock')}</p>
+            <p class="stat-value">${fmt(stock.remainingDoses)} <span style="font-size:13px;font-weight:600;color:var(--ink-soft)">${t('doses')}</span></p>
+          </div>`;
+        }).join("")}
+      </div>
+    `}
+  `;
+}
+function showAddMedicineModal(){
+  openModal(`
+    <h3>${t('addMedicine')}</h3>
+    <div class="field"><label>${t('medicineName')}</label><input id="f_name" placeholder="${t('medicineNamePh')}" autofocus></div>
+    <div class="field"><label>${t('dosesPerBottle')}</label><input id="f_dpb" type="number" min="0" inputmode="numeric"></div>
+    <div class="field"><label>${t('alertThreshold')}</label><input id="f_alert" type="number" min="0" inputmode="numeric"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitAddMedicine()">${t('save')}</button>
+    </div>
+  `);
+}
+function submitAddMedicine(){
+  const name = document.getElementById("f_name").value.trim();
+  if (!name) return;
+  const dosesPerBottle = Number(document.getElementById("f_dpb").value||0);
+  const alertThreshold = Number(document.getElementById("f_alert").value||0);
+  state.medicines.push({ id: uid(), name, dosesPerBottle, alertThreshold, consumption: [], supplies: [] });
+  persist(); closeModal(); render();
+}
+function openMedicine(id){ state.openMedicineId = id; state.medSubtab = "consumption"; persist(); render(); }
+function closeMedicine(){ state.openMedicineId = null; persist(); render(); }
+function deleteMedicine(id){
+  if (!confirm(t('deleteConfirmMedicine'))) return;
+  state.medicines = state.medicines.filter(x=>x.id!==id);
+  state.openMedicineId = null;
+  persist(); render();
+}
+function setMedSubtab(tab){ state.medSubtab = tab; render(); }
+function renderMedicineDetail(){
+  const m = state.medicines.find(x=>x.id===state.openMedicineId);
+  if (!m) { state.openMedicineId = null; return renderMedicinesList(); }
+  const stock = medicineStock(m);
+  const subtab = state.medSubtab || "consumption";
+  return `
+    <button class="back-link" onclick="closeMedicine()">→ ${t('back')}</button>
+    <div class="section-head">
+      <h2>${escapeHtml(m.name)}</h2>
+      <button class="btn btn-danger btn-sm" onclick="deleteMedicine('${m.id}')">${t('delete')}</button>
+    </div>
+    ${stock.lowStock ? `<div class="alert-banner">${icon('warn')} ${t('lowStockAlert')}</div>` : ""}
+    <div class="grid cols-3">
+      <div class="card"><p class="stat-label">${t('currentStock')}</p><p class="stat-value">${fmt(stock.remainingDoses)} <span style="font-size:12px;color:var(--ink-soft)">${t('doses')}</span></p></div>
+      <div class="card"><p class="stat-label">${t('remaining')} (${t('bottles')})</p><p class="stat-value">${fmt(stock.remainingBottles)}</p></div>
+      <div class="card"><p class="stat-label">${t('dosesPerBottle')}</p><p class="stat-value">${fmt(m.dosesPerBottle)}</p></div>
+    </div>
+    <div class="subtabs" style="margin-top:20px;">
+      <button class="${subtab==='consumption'?'active':''}" onclick="setMedSubtab('consumption')">${t('consumptionLog')}</button>
+      <button class="${subtab==='supply'?'active':''}" onclick="setMedSubtab('supply')">${t('supplyLog')}</button>
+      <button class="${subtab==='settings'?'active':''}" onclick="setMedSubtab('settings')">${t('settings')}</button>
+    </div>
+    ${subtab==='consumption' ? renderMedConsumption(m) : subtab==='supply' ? renderMedSupply(m) : renderMedSettings(m)}
+  `;
+}
+function renderMedConsumption(m){
+  return `
+    <div class="section-head" style="margin-top:0;"><h2 style="font-size:15px;">${t('consumptionLog')}</h2>
+      <button class="btn btn-primary btn-sm" onclick="showAddConsumptionModal('${m.id}')">+ ${t('addConsumption')}</button>
+    </div>
+    ${m.consumption.length===0 ? emptyState(icon('chart'), t('noDataYet')) : `
+      <div class="card table-wrap">
+        <table><thead><tr><th>${t('date')}</th><th>${t('bottlesUsed')}</th><th>${t('dosesUsed')}</th><th>${t('chicksCount')}</th><th>${t('destination')}</th><th></th></tr></thead>
+        <tbody>
+          ${[...m.consumption].reverse().map(c=>`
+            <tr>
+              <td>${escapeHtml(c.date)}</td><td>${fmt(c.bottlesUsed)}</td><td>${fmt(c.bottlesUsed*m.dosesPerBottle)}</td>
+              <td>${fmt(c.chicks)}</td><td>${escapeHtml(c.note||"")}</td>
+              <td><button class="icon-btn" onclick="deleteConsumption('${m.id}','${c.id}')">${icon('trash')}</button></td>
+            </tr>`).join("")}
+        </tbody></table>
+      </div>
+    `}
+  `;
+}
+function showAddConsumptionModal(medId){
+  openModal(`
+    <h3>${t('addConsumption')}</h3>
+    <div class="field"><label>${t('date')}</label><input id="f_date" type="date" value="${todayStr()}"></div>
+    <div class="field"><label>${t('bottlesUsed')}</label><input id="f_bottles" type="number" min="0" inputmode="numeric"></div>
+    <div class="field"><label>${t('chicksCount')}</label><input id="f_chicks" type="number" min="0" inputmode="numeric"></div>
+    <div class="field"><label>${t('destination')}</label><input id="f_note"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitAddConsumption('${medId}')">${t('save')}</button>
+    </div>
+  `);
+}
+function submitAddConsumption(medId){
+  const date = document.getElementById("f_date").value || todayStr();
+  const bottlesUsed = Number(document.getElementById("f_bottles").value||0);
+  const chicks = Number(document.getElementById("f_chicks").value||0);
+  const note = document.getElementById("f_note").value.trim();
+  const m = state.medicines.find(x=>x.id===medId);
+  m.consumption.push({ id: uid(), date, bottlesUsed, chicks, note });
+  persist(); closeModal(); render();
+}
+function deleteConsumption(medId, cId){
+  const m = state.medicines.find(x=>x.id===medId);
+  m.consumption = m.consumption.filter(c=>c.id!==cId);
+  persist(); render();
+}
+function renderMedSupply(m){
+  return `
+    <div class="section-head" style="margin-top:0;"><h2 style="font-size:15px;">${t('supplyLog')}</h2>
+      <button class="btn btn-primary btn-sm" onclick="showAddSupplyModal('${m.id}')">+ ${t('addSupply')}</button>
+    </div>
+    ${m.supplies.length===0 ? emptyState(icon('truck'), t('noDataYet')) : `
+      <div class="card table-wrap">
+        <table><thead><tr><th>${t('date')}</th><th>${t('bottlesReceived')}</th><th>${t('supplyNote')}</th><th></th></tr></thead>
+        <tbody>
+          ${[...m.supplies].reverse().map(s=>`
+            <tr><td>${escapeHtml(s.date)}</td><td>${fmt(s.bottles)}</td><td>${escapeHtml(s.note||"")}</td>
+            <td><button class="icon-btn" onclick="deleteSupply('${m.id}','${s.id}')">${icon('trash')}</button></td></tr>`).join("")}
+        </tbody></table>
+      </div>
+    `}
+  `;
+}
+function showAddSupplyModal(medId){
+  openModal(`
+    <h3>${t('addSupply')}</h3>
+    <div class="field"><label>${t('date')}</label><input id="f_date" type="date" value="${todayStr()}"></div>
+    <div class="field"><label>${t('bottlesReceived')}</label><input id="f_bottles" type="number" min="0" inputmode="numeric"></div>
+    <div class="field"><label>${t('supplyNote')}</label><input id="f_note"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitAddSupply('${medId}')">${t('save')}</button>
+    </div>
+  `);
+}
+function submitAddSupply(medId){
+  const date = document.getElementById("f_date").value || todayStr();
+  const bottles = Number(document.getElementById("f_bottles").value||0);
+  const note = document.getElementById("f_note").value.trim();
+  const m = state.medicines.find(x=>x.id===medId);
+  m.supplies.push({ id: uid(), date, bottles, note });
+  persist(); closeModal(); render();
+}
+function deleteSupply(medId, sId){
+  const m = state.medicines.find(x=>x.id===medId);
+  m.supplies = m.supplies.filter(s=>s.id!==sId);
+  persist(); render();
+}
+function renderMedSettings(m){
+  return `
+    <div class="card" style="max-width:360px;">
+      <div class="field"><label>${t('dosesPerBottle')}</label><input id="f_dpb" type="number" value="${m.dosesPerBottle}"></div>
+      <div class="field"><label>${t('alertThreshold')}</label><input id="f_alert" type="number" value="${m.alertThreshold}"></div>
+      <button class="btn btn-primary" onclick="saveMedSettings('${m.id}')">${t('save')}</button>
+    </div>
+  `;
+}
+function saveMedSettings(medId){
+  const m = state.medicines.find(x=>x.id===medId);
+  m.dosesPerBottle = Number(document.getElementById("f_dpb").value||0);
+  m.alertThreshold = Number(document.getElementById("f_alert").value||0);
+  persist(); render();
+}
+ 
+/* ================= NITROGEN ================= */
+function renderNitrogen(){
+  const n = state.nitrogen;
+  const usedTotal = n.logs.reduce((s,l)=>s+Number(l.used||0),0);
+  const remaining = Number(n.fillAmount||0) - usedTotal;
+  const avgDaily = n.logs.length ? (usedTotal / n.logs.length) : 0;
+  const daysLeft = avgDaily > 0 ? (remaining/avgDaily) : null;
+  const low = daysLeft !== null && daysLeft <= Number(n.alertLevel||0);
+  return `
+    <div class="section-head"><h2>${t('nitrogenTitle')}</h2>
+      <button class="btn btn-primary btn-sm" onclick="showAddNitrogenUsageModal()">+ ${t('addUsage')}</button>
+    </div>
+    ${low ? `<div class="alert-banner">${icon('warn')} ${t('lowStockAlert')}</div>` : ""}
+    <div class="grid cols-3">
+      <div class="card"><p class="stat-label">${t('remainingStock')}</p><p class="stat-value">${fmt1(remaining)}</p></div>
+      <div class="card"><p class="stat-label">${t('daysLeft')}</p><p class="stat-value">${daysLeft!==null?fmt1(daysLeft):'—'}</p></div>
+      <div class="card">
+        <p class="stat-label">${t('fillAmount')} / ${t('alertLevel')}</p>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <input id="f_fill" type="number" value="${n.fillAmount}" style="width:50%;padding:7px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);font-family:inherit;">
+          <input id="f_alertlvl" type="number" value="${n.alertLevel}" style="width:50%;padding:7px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);font-family:inherit;">
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;width:100%;justify-content:center;" onclick="saveNitrogenSettings()">${t('save')}</button>
+      </div>
+    </div>
+    <div class="section-head"><h2>${t('dailyUsage')}</h2></div>
+    ${n.logs.length===0 ? emptyState(icon('nitrogen'), t('noDataYet')) : `
+      <div class="card table-wrap">
+        <table><thead><tr><th>${t('date')}</th><th>${t('dailyUsage')}</th><th></th></tr></thead>
+        <tbody>
+          ${[...n.logs].reverse().map(l=>`
+            <tr><td>${escapeHtml(l.date)}</td><td>${fmt1(l.used)}</td>
+            <td><button class="icon-btn" onclick="deleteNitrogenLog('${l.id}')">${icon('trash')}</button></td></tr>`).join("")}
+        </tbody></table>
+      </div>
+    `}
+  `;
+}
+function saveNitrogenSettings(){
+  state.nitrogen.fillAmount = Number(document.getElementById("f_fill").value||0);
+  state.nitrogen.alertLevel = Number(document.getElementById("f_alertlvl").value||0);
+  persist(); render();
+}
+function showAddNitrogenUsageModal(){
+  openModal(`
+    <h3>${t('addUsage')}</h3>
+    <div class="field"><label>${t('date')}</label><input id="f_date" type="date" value="${todayStr()}"></div>
+    <div class="field"><label>${t('dailyUsage')}</label><input id="f_used" type="number" min="0" step="0.1"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitNitrogenUsage()">${t('save')}</button>
+    </div>
+  `);
+}
+function submitNitrogenUsage(){
+  const date = document.getElementById("f_date").value || todayStr();
+  const used = Number(document.getElementById("f_used").value||0);
+  state.nitrogen.logs.push({ id: uid(), date, used });
+  persist(); closeModal(); render();
+}
+function deleteNitrogenLog(id){
+  state.nitrogen.logs = state.nitrogen.logs.filter(l=>l.id!==id);
+  persist(); render();
+}
+ 
+/* ================= WORKERS ================= */
+function addDays(dateStr, days){
+  const d = new Date(dateStr); d.setDate(d.getDate()+Number(days||0));
+  return d.toISOString().slice(0,10);
+}
+function daysBetween(a,b){
+  return Math.round((new Date(b) - new Date(a)) / 86400000);
+}
+function renderWorkers(){
+  return `
+    <div class="section-head"><h2>${t('workersTitle')}</h2>
+      <button class="btn btn-primary btn-sm" onclick="showAddWorkerModal()">+ ${t('addWorker')}</button>
+    </div>
+    ${state.workers.length===0 ? emptyState(icon('workers'), t('noDataYet')) : `
+      <div class="card table-wrap">
+        <table><thead><tr>
+          <th>${t('workerName')}</th><th>${t('fileNumber')}</th><th>${t('vacationStart')}</th>
+          <th>${t('expectedReturn')}</th><th>${t('actualReturn')}</th><th>${t('daysBack')}</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${state.workers.map(w=>{
+            const expected = w.vacationStart ? addDays(w.vacationStart, w.vacationDays) : "—";
+            const daysBack = w.actualReturn ? daysBetween(w.actualReturn, todayStr()) : null;
+            return `<tr>
+              <td>${escapeHtml(w.name)}</td><td>${escapeHtml(w.fileNo)}</td><td>${escapeHtml(w.vacationStart||"—")}</td>
+              <td>${expected}</td><td>${escapeHtml(w.actualReturn||t('notReturned'))}</td>
+              <td>${daysBack!==null?fmt(daysBack):'—'}</td>
+              <td><button class="icon-btn" onclick="deleteWorker('${w.id}')">${icon('trash')}</button></td>
+            </tr>`;
+          }).join("")}
+        </tbody></table>
+      </div>
+    `}
+  `;
+}
+function showAddWorkerModal(){
+  openModal(`
+    <h3>${t('addWorker')}</h3>
+    <div class="field"><label>${t('workerName')}</label><input id="f_name" autofocus></div>
+    <div class="field"><label>${t('fileNumber')}</label><input id="f_file"></div>
+    <div class="field"><label>${t('vacationStart')}</label><input id="f_vstart" type="date"></div>
+    <div class="field"><label>${t('vacationDays')}</label><input id="f_vdays" type="number" min="0"></div>
+    <div class="field"><label>${t('actualReturn')}</label><input id="f_areturn" type="date"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitAddWorker()">${t('save')}</button>
+    </div>
+  `);
+}
+function submitAddWorker(){
+  const name = document.getElementById("f_name").value.trim();
+  if (!name) return;
+  state.workers.push({
+    id: uid(), name,
+    fileNo: document.getElementById("f_file").value.trim(),
+    vacationStart: document.getElementById("f_vstart").value,
+    vacationDays: Number(document.getElementById("f_vdays").value||0),
+    actualReturn: document.getElementById("f_areturn").value
+  });
+  persist(); closeModal(); render();
+}
+function deleteWorker(id){
+  state.workers = state.workers.filter(w=>w.id!==id);
+  persist(); render();
+}
+ 
+/* ================= INVENTORY ================= */
+function renderInventory(){
+  const q = (state.invQuery||"").trim().toLowerCase();
+  const items = state.inventory.filter(it =>
+    !q || it.name.toLowerCase().includes(q) || it.code.toLowerCase().includes(q)
+  );
+  return `
+    <div class="section-head"><h2>${t('inventoryTitle')}</h2>
+      <button class="btn btn-primary btn-sm" onclick="showAddItemModal()">+ ${t('addItem')}</button>
+    </div>
+    <div class="field" style="max-width:320px;">
+      <input placeholder="${t('search')}" value="${escapeHtml(state.invQuery||"")}" oninput="state.invQuery=this.value; renderInvTableOnly();">
+    </div>
+    <div id="invTableWrap">${renderInvTable(items)}</div>
+  `;
+}
+function renderInvTable(items){
+  if (state.inventory.length===0) return emptyState(icon('inventory'), t('noDataYet'));
+  if (items.length===0) return emptyState(icon('search'), t('noResults'));
+  return `
+    <div class="card table-wrap">
+      <table><thead><tr>
+        <th>${t('itemCode')}</th><th>${t('itemName')}</th><th>${t('category')}</th>
+        <th>${t('location')}</th><th>${t('box')}</th><th>${t('quantity')}</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${items.map(it=>`
+          <tr>
+            <td>${escapeHtml(it.code)}</td><td>${escapeHtml(it.name)}</td><td>${escapeHtml(it.category)}</td>
+            <td>${escapeHtml(it.location)}</td><td>${escapeHtml(it.box)}</td><td>${fmt(it.qty)}</td>
+            <td style="display:flex;gap:4px;">
+              <button class="icon-btn" onclick="showIssueModal('${it.id}')" style="color:var(--teal)">${icon('swap')}</button>
+              <button class="icon-btn" onclick="deleteItem('${it.id}')">${icon('trash')}</button>
+            </td>
+          </tr>`).join("")}
+      </tbody></table>
+    </div>
+  `;
+}
+function renderInvTableOnly(){
+  const q = (state.invQuery||"").trim().toLowerCase();
+  const items = state.inventory.filter(it => !q || it.name.toLowerCase().includes(q) || it.code.toLowerCase().includes(q));
+  document.getElementById("invTableWrap").innerHTML = renderInvTable(items);
+}
+function showAddItemModal(){
+  openModal(`
+    <h3>${t('addItem')}</h3>
+    <div class="field"><label>${t('itemCode')}</label><input id="f_code" autofocus></div>
+    <div class="field"><label>${t('itemName')}</label><input id="f_name"></div>
+    <div class="field"><label>${t('category')}</label><input id="f_cat"></div>
+    <div class="field"><label>${t('location')}</label><input id="f_loc"></div>
+    <div class="field"><label>${t('box')}</label><input id="f_box"></div>
+    <div class="field"><label>${t('quantity')}</label><input id="f_qty" type="number" min="0"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitAddItem()">${t('save')}</button>
+    </div>
+  `);
+}
+function submitAddItem(){
+  const name = document.getElementById("f_name").value.trim();
+  if (!name) return;
+  state.inventory.push({
+    id: uid(),
+    code: document.getElementById("f_code").value.trim(),
+    name,
+    category: document.getElementById("f_cat").value.trim(),
+    location: document.getElementById("f_loc").value.trim(),
+    box: document.getElementById("f_box").value.trim(),
+    qty: Number(document.getElementById("f_qty").value||0),
+    log: []
+  });
+  persist(); closeModal(); render();
+}
+function showIssueModal(itemId){
+  openModal(`
+    <h3>${t('issueItem')}</h3>
+    <div class="field"><label>${t('changeQty')}</label><input id="f_change" type="number"></div>
+    <div class="field"><label>${t('note')}</label><input id="f_note"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" onclick="submitIssue('${itemId}')">${t('save')}</button>
+    </div>
+  `);
+}
+function submitIssue(itemId){
+  const change = Number(document.getElementById("f_change").value||0);
+  const note = document.getElementById("f_note").value.trim();
+  const it = state.inventory.find(x=>x.id===itemId);
+  it.qty += change;
+  it.log.push({ id: uid(), date: todayStr(), change, note });
+  persist(); closeModal(); render();
+}
+function deleteItem(id){
+  state.inventory = state.inventory.filter(x=>x.id!==id);
+  persist(); render();
+}
+ 
+/* ---------- init ---------- */
+document.documentElement.lang = state.lang;
+document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+document.getElementById("langBtn").textContent = state.lang === "ar" ? "EN" : "AR";
+document.getElementById("brandName").textContent = t("appName");
+if (isAuthed()){
+  boot();
+} else {
+  renderLogin();
+}
+</script>
+</body>
+</html>
+ 
