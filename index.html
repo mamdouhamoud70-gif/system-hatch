@@ -487,6 +487,19 @@ function showAccountModal(){
     </div>
   `);
 }
+  async function persist(){
+    try {
+        localStorage.setItem("hatchery_state", JSON.stringify(state));
+    } catch(e){}
+
+    try {
+        await supabase
+            .from('hatch-data')
+            .upsert({ id: 1, data: state });
+    } catch(e) {
+        console.error("خطأ في الحفظ السحابي:", e);
+    }
+}
 function submitAccount(){
   const u = document.getElementById("acc_user").value.trim();
   const p = document.getElementById("acc_pass").value;
@@ -501,14 +514,30 @@ function doLogout(){
   document.getElementById("loginRoot").style.display = "block";
   renderLogin();
 }
-function boot(){
-  document.getElementById("loginRoot").style.display = "none";
-  document.getElementById("appRoot").style.display = "block";
-  document.querySelector(".brand-mark").innerHTML = icon('egg');
-  document.getElementById("accountBtn").innerHTML = icon('lock');
-  document.getElementById("brandSub").textContent = t('cloudEdition');
-  document.getElementById("statusText").textContent = t('statusOnline');
-  render();
+async function boot(){
+    document.getElementById("loginRoot").style.display = "none";
+    document.getElementById("appRoot").style.display = "block";
+    document.querySelector(".brand-mark").innerHTML = icon('egg');
+    document.getElementById("accountBtn").innerHTML = icon('lock');
+    document.getElementById("brandSub").textContent = t('cloudEdition');
+    document.getElementById("statusText").textContent = t('statusOnline');
+
+    // قراءة البيانات من Supabase عند فتح التطبيق
+    try {
+        const { data, error } = await supabase
+            .from('hatch-data')
+            .select('data')
+            .eq('id', 1)
+            .single();
+
+        if (data && data.data) {
+            state = data.data;
+        }
+    } catch (e) {
+        console.error("خطأ في جلب البيانات السحابية:", e);
+    }
+
+    render();
 }
  
 /* ---------- lang toggle ---------- */
